@@ -1,0 +1,537 @@
+Program.Sub.ScreenSU.Start
+gui.F_ReqOrderRev..create
+gui.F_ReqOrderRev..caption("Request Order Review")
+gui.F_ReqOrderRev..size(7350,7305)
+gui.F_ReqOrderRev..minx(0)
+gui.F_ReqOrderRev..miny(0)
+gui.F_ReqOrderRev..position(0,0)
+gui.F_ReqOrderRev..event(unload,f_reqorderrev_unload)
+gui.F_ReqOrderRev..alwaysontop(False)
+gui.F_ReqOrderRev..fontname("Arial")
+gui.F_ReqOrderRev..fontsize(8)
+gui.F_ReqOrderRev..forecolor(0)
+gui.F_ReqOrderRev..fontstyle(,,,,)
+gui.F_ReqOrderRev..BackColor(-2147483633)
+gui.F_ReqOrderRev..controlbox(True)
+gui.F_ReqOrderRev..maxbutton(False)
+gui.F_ReqOrderRev..minbutton(False)
+gui.F_ReqOrderRev..mousepointer(0)
+gui.F_ReqOrderRev..moveable(True)
+gui.F_ReqOrderRev..sizeable(False)
+gui.F_ReqOrderRev..ShowInTaskBar(True)
+gui.F_ReqOrderRev..titlebar(True)
+gui.F_ReqOrderRev.lstRecipients.create(listbox)
+gui.F_ReqOrderRev.lstRecipients.visible(True)
+gui.F_ReqOrderRev.lstRecipients.size(3045,1050)
+gui.F_ReqOrderRev.lstRecipients.zorder(0)
+gui.F_ReqOrderRev.lstRecipients.position(4000,335)
+gui.F_ReqOrderRev.lstRecipients.enabled(True)
+gui.F_ReqOrderRev.lstRecipients.fontname("Arial")
+gui.F_ReqOrderRev.lstRecipients.fontsize(8)
+gui.F_ReqOrderRev.txtEmail.create(textbox,"",True,3345,300,0,100,335,True,0,Arial,8,-2147483643,1)
+gui.F_ReqOrderRev.txtEmail.defaultvalue("")
+gui.F_ReqOrderRev.txtEmail.controlgroup(0)
+gui.F_ReqOrderRev.cmdAddEmail.create(button)
+gui.F_ReqOrderRev.cmdAddEmail.caption("Add")
+gui.F_ReqOrderRev.cmdAddEmail.visible(True)
+gui.F_ReqOrderRev.cmdAddEmail.size(840,375)
+gui.F_ReqOrderRev.cmdAddEmail.zorder(0)
+gui.F_ReqOrderRev.cmdAddEmail.position(100,750)
+gui.F_ReqOrderRev.cmdAddEmail.enabled(True)
+gui.F_ReqOrderRev.cmdAddEmail.fontname("Arial")
+gui.F_ReqOrderRev.cmdAddEmail.fontsize(8)
+gui.F_ReqOrderRev.cmdAddEmail.event(click,cmdaddemail_click)
+gui.F_ReqOrderRev.cmdAddEmail.defaultvalue("")
+gui.F_ReqOrderRev.cmdAddEmail.controlgroup(0)
+gui.F_ReqOrderRev.cmdRemoveEmail.create(button)
+gui.F_ReqOrderRev.cmdRemoveEmail.caption("Remove")
+gui.F_ReqOrderRev.cmdRemoveEmail.visible(True)
+gui.F_ReqOrderRev.cmdRemoveEmail.size(810,375)
+gui.F_ReqOrderRev.cmdRemoveEmail.zorder(0)
+gui.F_ReqOrderRev.cmdRemoveEmail.position(1100,750)
+gui.F_ReqOrderRev.cmdRemoveEmail.enabled(True)
+gui.F_ReqOrderRev.cmdRemoveEmail.fontname("Arial")
+gui.F_ReqOrderRev.cmdRemoveEmail.fontsize(8)
+gui.F_ReqOrderRev.cmdRemoveEmail.event(click,cmdremoveemail_click)
+gui.F_ReqOrderRev.cmdRemoveEmail.defaultvalue("")
+gui.F_ReqOrderRev.cmdRemoveEmail.controlgroup(0)
+gui.F_ReqOrderRev.lbl2.create(label,"Enter an email address",True,2850,255,1,100,135,True,0,Arial,8,-2147483633,0)
+gui.F_ReqOrderRev.lbl2.defaultvalue("")
+gui.F_ReqOrderRev.lbl2.controlgroup(0)
+gui.F_ReqOrderRev.cmdSend.create(button)
+gui.F_ReqOrderRev.cmdSend.caption("Send")
+gui.F_ReqOrderRev.cmdSend.visible(True)
+gui.F_ReqOrderRev.cmdSend.size(855,360)
+gui.F_ReqOrderRev.cmdSend.zorder(0)
+gui.F_ReqOrderRev.cmdSend.position(100,6350)
+gui.F_ReqOrderRev.cmdSend.enabled(True)
+gui.F_ReqOrderRev.cmdSend.fontname("Arial")
+gui.F_ReqOrderRev.cmdSend.fontsize(8)
+gui.F_ReqOrderRev.cmdSend.event(click,cmdsend_click)
+gui.F_ReqOrderRev.cmdSend.defaultvalue("")
+gui.F_ReqOrderRev.cmdSend.controlgroup(0)
+gui.F_ReqOrderRev.mltxtBody.create(textboxm)
+gui.F_ReqOrderRev.mltxtBody.text("")
+gui.F_ReqOrderRev.mltxtBody.visible(True)
+gui.F_ReqOrderRev.mltxtBody.size(6915,4110)
+gui.F_ReqOrderRev.mltxtBody.zorder(0)
+gui.F_ReqOrderRev.mltxtBody.position(100,2085)
+gui.F_ReqOrderRev.mltxtBody.enabled(True)
+gui.F_ReqOrderRev.mltxtBody.alignment(0)
+gui.F_ReqOrderRev.mltxtBody.fontname("Arial")
+gui.F_ReqOrderRev.mltxtBody.fontsize(8)
+gui.F_ReqOrderRev.mltxtBody.BackColor(-2147483643)
+gui.F_ReqOrderRev.mltxtBody.defaultvalue("")
+gui.F_ReqOrderRev.mltxtBody.controlgroup(0)
+gui.F_ReqOrderRev.lbl4.create(label,"Body",True,1935,255,1,100,1875,True,0,Arial,8,-2147483633,0)
+gui.F_ReqOrderRev.lbl4.defaultvalue("")
+gui.F_ReqOrderRev.lbl4.controlgroup(0)
+gui.F_ReqOrderRev.lbl5.create(label,"Recipients",True,1935,255,1,4000,135,True,0,Arial,8,-2147483633,0)
+gui.F_ReqOrderRev.lbl5.defaultvalue("")
+gui.F_ReqOrderRev.lbl5.controlgroup(0)
+gui.F_ReqOrderRev.lbl6.create(label,"Subject",True,1935,255,1,100,1265,True,0,Arial,8,-2147483633,0)
+gui.F_ReqOrderRev.lbl6.defaultvalue("")
+gui.F_ReqOrderRev.lbl6.controlgroup(0)
+gui.F_ReqOrderRev.txtSubject.create(textbox,"",True,6915,300,0,100,1500,True,0,Arial,8,-2147483643,1)
+gui.F_ReqOrderRev.txtSubject.defaultvalue("")
+gui.F_ReqOrderRev.txtSubject.controlgroup(0)
+gui.F_ReqOrderRev.cmdBrowseEmail.create(button)
+gui.F_ReqOrderRev.cmdBrowseEmail.caption("^")
+gui.F_ReqOrderRev.cmdBrowseEmail.visible(True)
+gui.F_ReqOrderRev.cmdBrowseEmail.size(330,330)
+gui.F_ReqOrderRev.cmdBrowseEmail.zorder(0)
+gui.F_ReqOrderRev.cmdBrowseEmail.position(3560,335)
+gui.F_ReqOrderRev.cmdBrowseEmail.enabled(True)
+gui.F_ReqOrderRev.cmdBrowseEmail.fontname("Arial")
+gui.F_ReqOrderRev.cmdBrowseEmail.fontsize(8)
+gui.F_ReqOrderRev.cmdBrowseEmail.event(click,cmdbrowseemail_click)
+gui.F_ReqOrderRev.cmdBrowseEmail.defaultvalue("")
+gui.F_ReqOrderRev.cmdBrowseEmail.controlgroup(0)
+gui.F_ReqOrderRev.txtEmail.tabstop(True)
+gui.F_ReqOrderRev.txtEmail.tabindex(1)
+gui.F_ReqOrderRev.cmdBrowseEmail.tabstop(True)
+gui.F_ReqOrderRev.cmdBrowseEmail.tabindex(2)
+gui.F_ReqOrderRev.cmdAddEmail.tabstop(True)
+gui.F_ReqOrderRev.cmdAddEmail.tabindex(3)
+gui.F_ReqOrderRev.cmdRemoveEmail.tabstop(True)
+gui.F_ReqOrderRev.cmdRemoveEmail.tabindex(4)
+gui.F_ReqOrderRev.txtSubject.tabstop(True)
+gui.F_ReqOrderRev.txtSubject.tabindex(5)
+gui.F_ReqOrderRev.mltxtBody.tabstop(True)
+gui.F_ReqOrderRev.mltxtBody.tabindex(6)
+gui.F_ReqOrderRev.cmdSend.tabstop(True)
+gui.F_ReqOrderRev.cmdSend.tabindex(7)
+gui.F_ReqOrderRev.lstRecipients.tabstop(True)
+gui.F_ReqOrderRev.lstRecipients.tabindex(8)
+
+
+gui.F_RevDate..create
+gui.F_RevDate..caption("Select Customer Resolution Date")
+gui.F_RevDate..size(4140,1725)
+gui.F_RevDate..minx(0)
+gui.F_RevDate..miny(0)
+gui.F_RevDate..position(0,0)
+gui.F_RevDate..event(unload,f_revdate_unload)
+gui.F_RevDate..alwaysontop(False)
+gui.F_RevDate..fontname("Arial")
+gui.F_RevDate..fontsize(8)
+gui.F_RevDate..forecolor(0)
+gui.F_RevDate..fontstyle(,,,,)
+gui.F_RevDate..BackColor(-2147483633)
+gui.F_RevDate..controlbox(True)
+gui.F_RevDate..maxbutton(False)
+gui.F_RevDate..minbutton(False)
+gui.F_RevDate..mousepointer(0)
+gui.F_RevDate..moveable(True)
+gui.F_RevDate..sizeable(True)
+gui.F_RevDate..ShowInTaskBar(True)
+gui.F_RevDate..titlebar(True)
+gui.F_RevDate.lblMsg.create(label,"*Credit Hold will be ignored until the date selected",True,3645,450,1,140,200,True,0,Arial,8,-2147483633,0)
+gui.F_RevDate.lblMsg.defaultvalue("")
+gui.F_RevDate.lblMsg.controlgroup(0)
+gui.F_RevDate.datepicker1.create(datepicker)
+gui.F_RevDate.datepicker1.visible(True)
+gui.F_RevDate.datepicker1.size(2460,360)
+gui.F_RevDate.datepicker1.zorder(0)
+gui.F_RevDate.datepicker1.position(200,625)
+gui.F_RevDate.datepicker1.enabled(True)
+gui.F_RevDate.datepicker1.checkbox(False)
+gui.F_RevDate.datepicker1.defaultvalue("")
+gui.F_RevDate.datepicker1.controlgroup(0)
+gui.F_RevDate.cmdDateOk.create(button)
+gui.F_RevDate.cmdDateOk.caption("Ok")
+gui.F_RevDate.cmdDateOk.visible(True)
+gui.F_RevDate.cmdDateOk.size(855,375)
+gui.F_RevDate.cmdDateOk.zorder(0)
+gui.F_RevDate.cmdDateOk.position(2800,600)
+gui.F_RevDate.cmdDateOk.enabled(True)
+gui.F_RevDate.cmdDateOk.fontname("Arial")
+gui.F_RevDate.cmdDateOk.fontsize(8)
+gui.F_RevDate.cmdDateOk.event(click,cmddateok_click)
+gui.F_RevDate.cmdDateOk.defaultvalue("")
+gui.F_RevDate.cmdDateOk.controlgroup(0)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.Global.sEmailList.Declare(String)
+Variable.Global.sDate.Declare(String)
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+'ERROR HANDLING ABOVE
+'Coded By SFF
+'3/5/2015
+'Emails Request to Recipient
+
+'10710 Populate
+'10980 Script 3
+
+'DECLARE VARIABLES
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!conx.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,72000)
+
+F.ODBC.Connection!conc.OpenConnection(V.Ambient.Ccon,V.Ambient.Cuser,V.Ambient.Cpass,72000)
+
+'Populate Hook
+F.Intrinsic.Control.If(V.caller.Hook,=,10710)
+	V.Passed.000203.Set("Req. Review")
+'Script 3 Hook
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,10980)
+	F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+	Gui.F_RevDate..Show
+F.Intrinsic.Control.EndIf
+
+'TERMINATE SUBROUTINE
+F.Intrinsic.Control.ExitSub
+
+'ERROR HANDLING BELOW
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_REQ_QT_REV.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+program.sub.f_reqorderrev_unload.start
+F.Intrinsic.Control.End
+
+program.sub.f_reqorderrev_unload.end
+
+program.sub.cmdsend_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdsend_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.iUserID.Declare(Long)
+V.Local.i.Declare(Long)
+V.Local.sEmailRecipients.Declare(String)
+V.Local.sSenderEmail.Declare(String)
+V.Local.sSenderName.Declare(String)
+V.Local.sSenderInfo.Declare(String)
+
+'Sender email
+F.Global.Security.GetUserEmail(V.Caller.User,V.Local.sSenderEmail)
+F.Intrinsic.Control.If(V.Local.sSenderEmail,=,"")
+	F.Intrinsic.UI.Msgbox("Error in sending email procedure.  The GS User (sender) does not have an email address associated with it in User Security Maintenance.")
+	F.Intrinsic.Control.End
+F.Intrinsic.Control.EndIf
+
+Gui.F_ReqOrderRev..Visible(false)
+
+'Sender name and email
+F.Global.Security.GetFullName(V.Caller.User,V.Local.sSenderName)
+F.Intrinsic.String.Concat(V.Local.sSenderEmail,"*!*",V.Local.sSenderName,V.Local.sSenderInfo)
+
+F.Global.Security.GetUserId(V.Caller.User,V.Caller.CompanyCode,V.Local.iUserID)
+F.Intrinsic.Control.For(V.Local.i,0,V.Global.sEmailList.UBound,1)
+	F.Intrinsic.Control.If(V.Local.sEmailRecipients,=,"")
+		F.Intrinsic.String.Build("{0}{1}",V.Global.sEmailList(V.Local.i),"",V.Local.sEmailRecipients)
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}@!@{1}",V.Local.sEmailRecipients,V.Global.sEmailList(V.Local.i),V.Local.sEmailRecipients)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.next(V.Local.i)
+F.Global.Messaging.QueueMessage(V.Caller.CompanyCode,V.Local.iUserID,V.Caller.Caller,V.Screen.F_ReqOrderRev!txtSubject.Text,V.Local.sSenderInfo,V.Local.sEmailRecipients,V.Screen.F_ReqOrderRev!mltxtBody.Text)
+
+F.Intrinsic.Control.CallSub(F_reqorderrev_unload)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdsend_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Screen_Config.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(F_reqorderrev_unload)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdsend_click.end
+
+program.sub.cmdremoveemail_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdremoveemail_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.iStart.Declare(Long)
+V.Local.iEnd.Declare(Long)
+V.Local.iTemp.Declare(Long)
+V.Local.bFound.Declare(Boolean)
+
+'Exit if no email selected in list
+F.Intrinsic.Control.If(V.Screen.F_ReqOrderRev!lstRecipients.Text,=,"")
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+'Search memory array for ordinal of selected email
+F.Intrinsic.Control.For(V.Local.iStart,0,V.Global.sEmailList.UBound,1)
+	F.Intrinsic.Control.If(V.Screen.F_ReqOrderRev!lstRecipients.Text,=,V.Global.sEmailList(v.Local.iStart))
+		V.Local.bFound.Set(True)
+		F.Intrinsic.Control.ExitFor(V.Local.iStart)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.iStart)
+
+'Shift memory array to remove selected email
+F.Intrinsic.Math.Sub(V.Global.sEmailList.UBound,1,V.Local.iEnd)
+F.Intrinsic.Control.For(V.Local.i,V.Local.iStart,V.Local.iEnd,1)
+	F.Intrinsic.Math.Add(V.Local.i,1,V.Local.iTemp)
+	V.Global.sEmailList(v.Local.i).set(V.Global.sEmailList(v.Local.iTemp))
+F.Intrinsic.Control.Next(V.Local.i)
+F.Intrinsic.Control.If(V.Global.sEmailList.UBound,=,0)
+	V.Global.sEmailList.Redim(-1,-1)
+F.Intrinsic.Control.else
+	V.Global.sEmailList.RedimPreserve(0,V.Local.iEnd)
+F.Intrinsic.Control.EndIf
+
+'Fill list from memory array
+Gui.F_ReqOrderRev.lstRecipients.ClearItems
+
+'Fill listbox from memory array
+F.Intrinsic.Control.For(V.Local.i,0,V.Global.sEmailList.UBound,1)
+	Gui.F_ReqOrderRev.lstRecipients.AddItem(V.Global.sEmailList(v.Local.i))
+F.Intrinsic.Control.Next(V.Local.i)
+
+'Clear email selection
+Gui.F_ReqOrderRev.txtEmail.Text("")
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdremoveemail_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Screen_Config.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(F_reqorderrev_unload)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdremoveemail_click.end
+
+Program.sub.cmdaddemail_click.start
+F.Intrinsic.Control.SetErrorHandler("cmdaddemail_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sEmail.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.bChk.Declare(Boolean)
+
+V.Local.bChk.Set(False)
+'Exit if no email selected or enetered
+F.Intrinsic.Control.If(V.Screen.F_ReqOrderRev!txtEmail.Text,=,"")
+	F.Intrinsic.UI.Msgbox("Please enter a recipient email address..","Invalid Email")
+	Gui.F_ReqOrderRev.txtEmail.SetFocus
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+
+'Checking for valid email
+V.Local.sEmail.Set(V.Screen.F_ReqOrderRev!txtEmail.Text)
+F.Intrinsic.String.Split(V.Local.sEmail.Trim,"@",V.Local.sEmail)
+F.Intrinsic.Control.If(V.Local.sEmail.UBound,<>,1)
+	F.Intrinsic.UI.Msgbox("Invalid email address.","Invalid Email")
+	Gui.F_ReqOrderRev.txtEmail.SetFocus
+	Gui.F_ReqOrderRev.txtEmail.SelectAll
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.Else
+	F.Intrinsic.String.Split(V.Local.sEmail(1),".",V.Local.sEmail)
+	F.Intrinsic.Control.If(V.Local.sEmail.UBound,<,1)
+		F.Intrinsic.UI.Msgbox("Invalid email address.","Invalid Email")
+		Gui.F_ReqOrderRev.txtEmail.SetFocus
+		Gui.F_ReqOrderRev.txtEmail.SelectAll
+		F.Intrinsic.Control.ExitSub
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+'Search for email address in memory array  to avoid duplicates
+F.Intrinsic.Control.For(V.Local.i,0,V.Global.sEmailList.UBound,1)
+	F.Intrinsic.Control.If(V.Screen.F_ReqOrderRev!txtEmail.Text,=,V.Global.sEmailList(v.Local.i))
+		V.Local.bChk.Set(True)
+		F.Intrinsic.Control.ExitFor(V.Local.i)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.Next(V.Local.i)
+
+'If email not found in list, add it to memory array
+F.Intrinsic.Control.If(V.Local.bChk,=,False)
+	F.Intrinsic.Control.If(V.Global.sEmailList.UBound,=,-1)
+		V.Global.sEmailList.Redim(0,0)
+	F.Intrinsic.Control.Else
+		V.Global.sEmailList.RedimPreserve(1)
+	F.Intrinsic.Control.EndIf
+	V.Global.sEmailList(v.Global.sEmailList.UBound).Set(V.Screen.F_ReqOrderRev!txtEmail.Text)
+F.Intrinsic.Control.EndIf
+
+'Fill list from memory array
+Gui.F_ReqOrderRev.txtEmail.Text("")
+Gui.F_ReqOrderRev.lstRecipients.ClearItems
+
+'Fill listbox from memory array
+F.Intrinsic.Control.For(V.Local.i,0,V.Global.sEmailList.UBound,1)
+	Gui.F_ReqOrderRev.lstRecipients.AddItem(V.Global.sEmailList(v.Local.i))
+F.Intrinsic.Control.Next(V.Local.i)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdaddemail_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Screen_Config.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(F_reqorderrev_unload)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdaddemail_click.end
+
+program.sub.cmdbrowseemail_click.start
+
+F.Intrinsic.Control.SetErrorHandler("cmdbrowseemail_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sSql.Declare(String)
+V.Local.sTitles.Declare(String)
+V.Local.sWidths.Declare(String)
+
+F.Intrinsic.UI.SetBrowserHotTypeAhead(True)
+
+'load email list of users
+V.Local.sSql.Set("Select FIRST_NAME, LAST_NAME, EMAIL from USER_INFORMATION Where EMAIL <> '' Order By FIRST_NAME, LAST_NAME")
+F.Intrinsic.String.Split("First Name*!*Last Name*!*Email","*!*",V.local.sTitles)
+F.Intrinsic.String.Split("1000*!*1000*!*3000","*!*",V.local.sWidths)
+
+'browser
+F.Intrinsic.UI.Browser("Select a User","conc",V.Local.sSql,V.Local.sTitles,V.Local.sWidths,V.Local.sRet)
+
+F.Intrinsic.Control.If(V.Local.sRet,<>,"***CANCEL***")
+	F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+	Gui.F_ReqOrderRev.txtEmail.Text(V.Local.sRet(2).Trim)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmdbrowseemail_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_Screen_Config.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+	F.Intrinsic.Control.CallSub(F_reqorderrev_unload)
+Function.Intrinsic.Control.EndIf
+
+program.sub.cmdbrowseemail_click.end
+
+Program.Sub.LoadScreen.Start
+F.Intrinsic.Control.SetErrorHandler("LoadScreen_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sBody.Declare(String)
+V.Local.sSubject.Declare(String)
+'Pre load email with text
+F.Intrinsic.String.Build("Ignore Credit Hold Request for Customer ({0}){1}",V.Passed.000006,V.Passed.000008,V.Local.sSubject)
+F.Intrinsic.String.Build("{3}Customer Quote #:{4}{3}Please Ignore the Credit Hold for Customer ({0}){1} until {2}.{3}{3}Thank You,{3}",V.Passed.000006,V.passed.000008,V.Global.sDate,V.Ambient.NewLine,V.Passed.000003,V.Local.sBody)
+
+Gui.F_ReqOrderRev.mltxtBody.Text(V.Local.sBody)
+Gui.F_ReqOrderRev.txtSubject.Text(V.Local.sSubject)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("LoadScreen_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_REQ_QT_REV.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.LoadScreen.End
+
+program.sub.f_revdate_unload.start
+Gui.F_RevDate..Visible(false)
+
+program.sub.f_revdate_unload.end
+
+program.sub.cmddateok_click.start
+F.Intrinsic.Control.SetErrorHandler("cmddateok_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'hide screen
+F.Intrinsic.Control.CallSub(F_revdate_unload)
+
+'Set global variable for date picked that will be passed to email body.
+V.Global.sDate.Set(V.Screen.F_RevDate!datepicker1.Value)
+
+'pre-load screen with subject and body text
+F.Intrinsic.Control.CallSub(Loadscreen)
+
+'show screen
+Gui.F_ReqOrderRev..Show
+Gui.F_ReqOrderRev.txtEmail.SetFocus
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmddateok_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_REQ_QT_REV.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmddateok_click.end
+
+Program.Sub.Comments.Start
+${$0$}$GCG_MIR_REQ_QT_REV$}$SUPERVSR$}$3/3/2015
+${$3$}$0$}$$}$-1$}$-1$}$$}$1/1/1900$}$Description
+Program 1:Estimating/Routing & Quote Management>File>Quick Quote>Script Button("Request Order Review") This program will be an email function added to a script button on the Quote Header and is intended for use when a
+customer is placed on credit hold and orders cannot be created. The user will be able to create a quote and submit a
+request to management to ignore the credit hold that has been placed on the customer, so that the quote can be won to an
+order or orders can then be created for that customer.
+
+Hooks
+10710 Populate
+10980 Script 3
+
+Specs
+Program 1:Estimating/Routing & Quote Management>File>Quick Quote>Script Button("Request Order Review")
+Screen:
+Textboxes(To, From, Subject, Body)
+Listview(Email Recipients)
+Add, Remove Recipient Button, Send Button, Cancel Button
+
+Auto populate with current GSS users email address:
+
+Allow multiple recipients, with Add button add email address from "To" to list view, and all user to remove as well.
+
+Automatically Populate Subject Line with passed Customer#, Name, Quote# for subject: "Order Review Request Quote#, Customer #, Customer Name"
+
+Multiline Textbox for Body will allow for user to type in any additional message to AR. First line of body will be automatically populated "Please review to remove credit hold for Customer #, Customer Name".
+
+Send Email to all recipients that are in the list view.
+
+End Program.
+
+
+Program.Sub.Comments.End
+
