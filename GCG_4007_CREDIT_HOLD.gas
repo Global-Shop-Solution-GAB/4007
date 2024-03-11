@@ -1,0 +1,795 @@
+Program.Sub.ScreenSU.Start
+gui.F_SelectDate..create
+gui.F_SelectDate..caption("Select A Resolution Date")
+gui.F_SelectDate..size(3420,1920)
+gui.F_SelectDate..minx(0)
+gui.F_SelectDate..miny(0)
+gui.F_SelectDate..position(0,0)
+gui.F_SelectDate..event(unload,F_SelectDateUnload)
+gui.F_SelectDate..alwaysontop(False)
+gui.F_SelectDate..fontname("Arial")
+gui.F_SelectDate..fontsize(8)
+gui.F_SelectDate..forecolor(0)
+gui.F_SelectDate..fontstyle(,,,,)
+gui.F_SelectDate..BackColor(-2147483633)
+gui.F_SelectDate..controlbox(True)
+gui.F_SelectDate..maxbutton(False)
+gui.F_SelectDate..minbutton(False)
+gui.F_SelectDate..mousepointer(0)
+gui.F_SelectDate..moveable(True)
+gui.F_SelectDate..sizeable(False)
+gui.F_SelectDate..ShowInTaskBar(True)
+gui.F_SelectDate..titlebar(True)
+gui.F_SelectDate.lblMsg.create(label,"Must Select a Valid Resolution Date if Ignoring FlagCreditHoldOption",True,3270,555,1,200,200,True,0,Arial,8,-2147483633,0)
+gui.F_SelectDate.lblMsg.defaultvalue("")
+gui.F_SelectDate.lblMsg.controlgroup(0)
+gui.F_SelectDate.dateResolve.create(datepicker)
+gui.F_SelectDate.dateResolve.visible(True)
+gui.F_SelectDate.dateResolve.size(1935,285)
+gui.F_SelectDate.dateResolve.zorder(0)
+gui.F_SelectDate.dateResolve.position(200,800)
+gui.F_SelectDate.dateResolve.enabled(True)
+gui.F_SelectDate.dateResolve.checkbox(False)
+gui.F_SelectDate.dateResolve.defaultvalue("")
+gui.F_SelectDate.dateResolve.controlgroup(0)
+gui.F_SelectDate.cmdDateOk.create(button)
+gui.F_SelectDate.cmdDateOk.caption("Ok")
+gui.F_SelectDate.cmdDateOk.visible(True)
+gui.F_SelectDate.cmdDateOk.size(675,375)
+gui.F_SelectDate.cmdDateOk.zorder(0)
+gui.F_SelectDate.cmdDateOk.position(2320,700)
+gui.F_SelectDate.cmdDateOk.enabled(True)
+gui.F_SelectDate.cmdDateOk.fontname("Arial")
+gui.F_SelectDate.cmdDateOk.fontsize(8)
+gui.F_SelectDate.cmdDateOk.event(click,cmddateok_click)
+gui.F_SelectDate.cmdDateOk.defaultvalue("")
+gui.F_SelectDate.cmdDateOk.controlgroup(0)
+
+
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Variable.UDT.uCustomer.Define("Customer",String,Customer)
+Variable.UDT.uCustomer.Define("IGNR_CRDT_HOLD",Long,IGNR_CRDT_HOLD)
+Variable.UDT.uCustomer.Define("FLAG_CRDT_HOLD",Long,FLAG_CRDT_HOLD)
+Variable.UDT.uCustomer.Define("DATE_RESOLVE",String,DATE_RESOLVE)
+Variable.UDT.uCustomer.Define("CUSTOMER_RATING",Long,CUSTOMER_RATING)
+Variable.uGlobal.uCustomer.Declare("uCustomer")
+Variable.Global.uDateResolve.Declare(String)
+Variable.Global.sDate.Declare(String)
+Variable.Global.bBusy.Declare(Boolean,True)
+Variable.UDT.uARStat.Define("CUSTOMER",String,CUSTOMER)
+Variable.UDT.uARStat.Define("TOTAL",Float,TOTAL)
+Variable.UDT.uARStat.Define("DATE_RESOLVE",String)
+Variable.UDT.uARStat.Define("CREDIT_LIMIT",String,CREDIT_LIMIT)
+Variable.UDT.uARStat.Define("CUSTOMER_RATING",String)
+Variable.UDT.uARStat.Define("FLAG_CRDT_HOLD",String)
+Variable.UDT.uARStat.Define("IGNR_CRDT_HOLD",String)
+Variable.UDT.uARStat.Define("PROCESSED",String)
+Variable.uGlobal.uARStat.Declare("uARStat")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+'Coded by SFF
+'Detailed Notes in Project Description
+'3/5/2015
+
+V.Local.sError.Declare(String)
+
+F.ODBC.Connection!conX.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass,72000)
+
+'if customer master populate hook
+F.Intrinsic.Control.If(V.Caller.Hook,=,14350)
+	F.Intrinsic.Control.CallSub(Activatecheckboxes)
+	F.Intrinsic.Control.CallSub(Loadsavedoptions)
+'Flag Credit Hold Checkbox Hook
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,14375)
+	'if unflagged, make sure the ignore flag and date are cleared
+	F.Intrinsic.Control.If(V.Passed.GAB-CHK-1,<>,"Y")
+		V.Passed.GAB-CHK-2.Set("N")
+		V.Passed.GAB-TEXT-2.Set("")
+	F.Intrinsic.Control.EndIf
+'Ignore Flag Credit Hold checkbox hook
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,14376)
+	F.Intrinsic.Control.If(V.Passed.GAB-CHK-2,=,"Y")
+		Gui.F_SelectDate..Show
+	F.Intrinsic.Control.Else
+		V.Passed.GAB-TEXT-2.Set("")
+	F.Intrinsic.Control.EndIf
+'if customer master Pre-Save Hook
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,14384)
+	F.Intrinsic.Control.CallSub(Savecustomermaster)
+
+'If Order Line Qty Change Hook
+F.Intrinsic.Control.ElseIf(V.Caller.Hook,=,12120)
+	F.Intrinsic.Control.CallSub(Checkcreditstatus)
+
+'If Task Scheduler or on menu item
+F.Intrinsic.Control.Else
+	F.Intrinsic.Control.CallSub(Flagcreditholds)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.ActivateCheckboxes.Start
+F.Intrinsic.Control.SetErrorHandler("ActivateCheckboxes_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+
+'Activate hidden controls and labels on customer master
+
+'Flag Credit Hold when Past Due
+V.Passed.GAB-LBL-1.Set("Flag Credit Hold When Past Due")
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PL",325)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-1","PT",520)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-1,"HIDE",0)
+
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PL",305)
+F.Intrinsic.Variable.SetProperty("GAB-CHK-1","PT",520)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-1,"HIDE",0)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-1,"LOCK",0)
+
+'Ignore Flag Credit Hold
+V.Passed.GAB-LBL-2.Set("Ignore Flag Credit Hold Until:")
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PL",550)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PT",520)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-2","PW",133)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-2,"HIDE",0)
+
+F.Intrinsic.Variable.SetProperty("GAB-CHK-2","PL",530)
+F.Intrinsic.Variable.SetProperty("GAB-CHK-2","PT",520)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-2,"HIDE",0)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-2,"LOCK",0)
+
+'Date till Account should be resolved(Unflag Ignore checkbox) - Next To Ignore Flag Label
+V.Passed.GAB-LBL-4.Set("*MM/DD/YYYY")
+F.Intrinsic.Variable.SetProperty("GAB-LBL-4","PL",690)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-4","PT",498)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-4","PW",75)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-2,"HIDE",0)
+
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PL",690)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PT",516)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-2","PW",75)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"HIDE",0)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"LOCK",1)
+
+'Customer Rating
+V.Passed.GAB-LBL-3.Set("Customer Rating(1-5)")
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PL",625)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PT",423)
+F.Intrinsic.Variable.SetProperty("GAB-LBL-3","PW",110)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-LBL-3,"HIDE",0)
+
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PL",625)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PT",440)
+F.Intrinsic.Variable.SetProperty("GAB-TEXT-1","PW",30)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"HIDE",0)
+F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"LOCK",0)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("ActivateCheckboxes_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.ActivateCheckboxes.End
+
+Program.Sub.CheckCreditStatus.Start
+F.Intrinsic.Control.SetErrorHandler("CheckCreditStatus_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.iBefore.Declare(Float)
+V.Local.iAfter.Declare(Float)
+V.Local.iTally.Declare(Float)
+V.Local.iTotal.Declare(Float)
+V.Local.sCustomer.Declare(String)
+V.Local.sSql.Declare(String)
+
+'This will fire when Line Qty Change Hook fires on order entry,
+'if line is modifed and it puts the total over the credit limit then it will not let them save the order line
+
+'get customer
+F.Intrinsic.String.LPad(V.Passed.000060,"0",7,V.Local.sSql)
+F.Intrinsic.String.Build("Select CUSTOMER from v_order_header where order_no = '{0}'",V.Local.sSql,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	V.Local.sCustomer.Set(V.ODBC.conX!rst.FieldValTrim!CUSTOMER)
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+'see if customer is in the custom table to flag credit hold.
+'if there is no result then exit subroutine
+F.Intrinsic.String.Build("Select Customer from GCG_4007_CRDTHOLD where CUSTOMER = '{0}' and  FLAG_CRDT_HOLD = 1 and IGNR_CRDT_HOLD = 0",V.Local.sCustomer,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,=,True)
+	F.Intrinsic.Control.ExitSub
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+'Get sum(order extension) from order lines
+F.Intrinsic.String.LPad(V.Passed.000060,"0",7,V.Local.sSql)
+F.Intrinsic.String.Build("Select sum(extension_order) as ORDTOTAL from v_order_lines where order_no = '{0}'",V.Local.sSql,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	V.Local.iBefore.Set(V.ODBC.conX!rst.FieldValTrim!ORDTOTAL)
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+'Total After line change Qty v.passed.000036
+'Get difference
+F.Intrinsic.Math.ConvertToFloat(V.Passed.000036,V.Local.iAfter)
+F.Intrinsic.Math.Sub(V.Local.iAfter,V.Local.iBefore,V.Local.iAfter)
+
+'get credit limit and amout in open orders + amt_open_item_bal,
+F.Intrinsic.String.Build("Select a.credit,b.amt_open_orders + amt_open_item_bal as AMT_OPEN_ORDERS from V_customer_master a left outer join v_customer_sales b on a.customer = b.customer where a.customer = '{0}'",V.Local.sCustomer,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	V.Local.iTally.Set(V.ODBC.conX!rst.FieldValFloat!AMT_OPEN_ORDERS)
+	F.Intrinsic.Math.Add(V.Local.iAfter,V.Local.iTally,V.Local.iTally)
+	F.Intrinsic.String.Build("Select CREDIT_AMOUNT from AR_CREDIT_LIMIT where credit_code = '{0}'",V.ODBC.conX!rst.FieldValTrim!CREDIT,V.Local.sSql)
+	F.ODBC.Connection!conX.OpenRecordsetRO("rstC",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conX!rstC.EOF,<>,True)
+		V.Local.iTotal.Set(V.ODBC.conX!rstC.FieldValFloat!CREDIT_AMOUNT)
+		F.Intrinsic.Control.If(V.Local.iTotal,<>,0)
+			F.Intrinsic.Control.If(V.Local.iTally,>,V.Local.iTotal)
+				'if already locked then exit sub
+				F.Intrinsic.Control.If(V.Passed.000037,=,"")
+					F.Intrinsic.Control.ExitSub
+				F.Intrinsic.Control.EndIf
+				'lock Save button if change in total price puts customer over credit limit
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000037,"LOCK",1)
+				V.Passed.000037.Set("")
+				V.Passed.000007.Set("0")
+				F.Intrinsic.UI.Msgbox("Cstomer has Reached Credit Limit, Quantity Changed to Zero(0)","Unable to Save Order Line")
+			F.Intrinsic.Control.Else
+				'unlock save button if back under
+				F.Intrinsic.UI.ChangeCallerProperty(V.Passed.000037,"LOCK",0)
+				V.Passed.000037.Set("Save")
+			F.Intrinsic.Control.EndIf
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rstC.Close
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("CheckCreditStatus_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.CheckCreditStatus.End
+
+Program.Sub.SaveCustomerMaster.Start
+F.Intrinsic.Control.SetErrorHandler("SaveCustomerMaster_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'This sub saves settings on customer master when they are changed to custom table maintaining the values for the hidden controls on the customer master
+V.Local.sCustomer.Declare(String)
+V.Local.iFlagCredHld.Declare(Long)
+V.Local.iIgnoreFlag.Declare(Long)
+V.local.iCustRating.Declare(Long)
+V.Local.bStatus.Declare(Boolean)
+V.Local.dDate.Declare(Date)
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+
+'TABLE - GCG_4007_CRDTHOLD
+'CUSTOMER char(6)
+'FLAG_CRDT_HOLD BIT, = GAB-CHK-1
+'IGNR_CRDT_HOLD BIT, = GAB-CHK-2
+'DATE_RESOLVE DATE, = GAB-TEXT-2
+'CUSTOMER_RATING char(1) = GAB-TEXT-1
+
+'check to see if Rating is Numeric Entry
+V.Local.sRet.Set(V.Passed.GAB-TEXT-1)
+F.Intrinsic.Control.If(V.Local.sRet.Trim,<>,"")
+	F.Intrinsic.Math.IsNumeric(V.Passed.GAB-TEXT-1,V.Local.bStatus)
+	F.Intrinsic.Control.If(V.Local.bStatus,<>,True)
+		F.Intrinsic.UI.Msgbox("Customer Rating Must be Numeric Only(0-5)","Customer Rating Error")
+		V.Passed.777777.Set(1)
+		F.Intrinsic.Control.End
+	'check to see if rating > 5
+	F.Intrinsic.Control.Elseif(V.Passed.GAB-TEXT-1,>,5)
+		F.Intrinsic.UI.Msgbox("Customer Rating Must be Numeric Only(0-5)","Customer Rating Error")
+		V.Passed.777777.Set(1)
+		F.Intrinsic.Control.End
+	'check to see if less than 1
+	F.intrinsic.Control.ElseIf(V.Passed.GAB-TEXT-1,<,0)
+		F.Intrinsic.UI.Msgbox("Customer Rating Must be Numeric Only(0-5)","Customer Rating Error")
+		V.Passed.777777.Set(1)
+		F.Intrinsic.Control.End
+	'Else set local variable
+	F.Intrinsic.Control.Else
+		V.Local.iCustRating.Set(V.Passed.GAB-TEXT-1)
+	F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.EndIf
+
+'if Ignore Flag Credit Hold is Checked ,Check for Valid Date and check to see if Flag Credit Hold is checked
+F.Intrinsic.Control.If(V.Passed.GAB-CHK-2,=,"Y")
+	'check to see if Flag Credit Hold is checked(both must be used if using this option)
+	F.Intrinsic.Control.If(V.Passed.GAB-CHK-1,=,"N")
+		F.Intrinsic.UI.Msgbox("Must use Flag Credit Hold Option if Checking this Option","Credit Hold Flag Error")
+		V.Passed.777777.Set(1)
+		F.Intrinsic.Control.End
+	F.Intrinsic.Control.EndIf
+	'Check to see if date is valid, if not then have user select date
+	V.Global.sDate.Set(V.Passed.GAB-TEXT-2)
+	F.Intrinsic.Date.IsDate(V.Global.sDate,V.Local.bStatus)
+	F.Intrinsic.Control.If(V.Local.bStatus,<>,True)
+		F.Intrinsic.Control.CallSub(Selectresolvedate)
+'sleep while waiting on date picker
+		F.Intrinsic.Control.DoUntil(V.Global.bBusy,=,False)
+			F.Intrinsic.UI.Sleep(1)
+		F.Intrinsic.Control.Loop
+
+	F.Intrinsic.Control.Endif
+	
+	'use month and day variables to split and build date back together before formatting due to textbox as hidden control
+	V.Local.sDateMM.Declare(String)
+	V.Local.sDateDD.Declare(String)
+	'convert back to date
+	F.Intrinsic.String.Split(V.Global.sDate,"/",V.Global.sDate)
+	F.Intrinsic.String.LPad(V.Global.sDate(0),"0",2,V.Local.sDateMM)
+	F.Intrinsic.String.LPad(V.Global.sDate(1),"0",2,V.Local.sDateDD)
+	F.Intrinsic.String.Build("{0}/{1}/{2}",V.Local.sDateMM,V.Local.sDateDD,V.Global.sDate(2),V.Global.sDate)
+	F.Intrinsic.Date.ConvertDString(V.Global.sDate,"MM/DD/YYYY",V.Local.dDate)
+	'convert back to pervasive date format for SQL
+	F.Intrinsic.String.Format(V.Local.dDate,"YYYY-MM-DD",V.Global.sDate)
+F.intrinsic.control.endif
+
+'set BIT values for table	
+'FLAG Credit Hold
+F.Intrinsic.Control.If(V.Passed.GAB-CHK-1,=,"Y")
+	V.Local.iFlagCredHld.Set(1)
+F.Intrinsic.Control.Else
+	V.Local.iFlagCredHld.Set(0)
+F.Intrinsic.Control.EndIf
+
+'Ignore Credit Hold Flag
+F.Intrinsic.Control.If(V.Passed.GAB-CHK-2,=,"Y")
+	V.Local.iIgnoreFlag.Set(1)
+F.Intrinsic.Control.Else
+	V.Local.iIgnoreFlag.Set(0)
+F.Intrinsic.Control.EndIf
+
+'set customer and  sSQL query
+V.Local.sCustomer.Set(V.Passed.000002)
+F.Intrinsic.String.Build("Select * from GCG_4007_CRDTHOLD where CUSTOMER = '{0}'",V.Local.sCustomer,V.Local.sSql)
+
+'fields to udpate
+'CUSTOMER char(6)
+'FLAG_CRDT_HOLD BIT,
+'IGNR_CRDT_HOLD BIT,
+'DATE_RESOLVE DATE,
+'CUSTOMER_RATING char(1)
+
+'open record set to see if record exists
+F.ODBC.Connection!conX.OpenRecordsetRW("rst",V.Local.sSql)
+
+'if record exists in custom table then update
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	F.ODBC.conX!rst.Set!FLAG_CRDT_HOLD(V.Local.iFlagCredHld)
+	F.ODBC.conX!rst.Set!IGNR_CRDT_HOLD(V.Local.iIgnoreFlag)
+	'set null date value for pervasive date if no date set
+	F.Intrinsic.Control.If(V.Global.sDate.Trim,=,"")
+		V.Global.sDate.Set("1900-01-01")
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rst.Set!DATE_RESOLVE(V.Global.sDate)
+	F.ODBC.conX!rst.Set!CUSTOMER_RATING(V.Local.iCustRating)
+	F.ODBC.conX!rst.Update
+'if record doe not exists then add new record
+F.Intrinsic.Control.Else
+	F.ODBC.conX!rst.AddNew
+	F.ODBC.conX!rst.Set!CUSTOMER(V.Local.sCustomer)
+	F.ODBC.conX!rst.Set!FLAG_CRDT_HOLD(V.Local.iFlagCredHld)
+	F.ODBC.conX!rst.Set!IGNR_CRDT_HOLD(V.Local.iIgnoreFlag)
+	'set null value for pervasive if no date set
+	F.Intrinsic.Control.If(V.Global.sDate.Trim,=,"")
+		V.Global.sDate.Set("1900-01-01")
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rst.Set!DATE_RESOLVE(V.Global.sDate)
+	F.ODBC.conX!rst.Set!CUSTOMER_RATING(V.Local.iCustRating)
+	F.ODBC.conX!rst.Update
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("SaveCustomerMaster_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.SaveCustomerMaster.End
+
+Program.Sub.LoadSavedOptions.Start
+F.Intrinsic.Control.SetErrorHandler("LoadSavedOptions_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sGroups.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.bExists.Declare(Boolean)
+'this sub loads the saved Options for this program from Custom Table to the customer master
+
+'fields to read from
+'TABLE - GCG_4007_CRDTHOLD
+'CUSTOMER char(6)
+'FLAG_CRDT_HOLD BIT, = GAB-CHK-1
+'IGNR_CRDT_HOLD BIT, = GAB-CHK-2
+'DATE_RESOLVE DATE, = GAB-TEXT-2
+'CUSTOMER_RATING char(1) = GAB-TEXT-1
+V.Local.sCustomer.Declare(String)
+V.Local.sSql.Declare(String)
+
+'get customer from core screen and open recordset
+V.Local.sCustomer.Set(V.Passed.000002)
+V.Local.sSql.Set("select CUSTOMER,FLAG_CRDT_HOLD,IGNR_CRDT_HOLD,CUSTOMER_RATING,")
+F.Intrinsic.String.Build("{0} substring(date_resolve,6,2)+'/'+substring(date_resolve,9,2)+'/'+substring(date_resolve,1,4)as'DATE_RESOLVE' from GCG_4007_CRDTHOLD where CUSTOMER = '{1}'",V.Local.sSql,V.Local.sCustomer,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+'only proceed if record exists
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.FieldVal!FLAG_CRDT_HOLD,=,True)
+		V.Passed.GAB-CHK-1.Set("Y")
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.FieldVal!IGNR_CRDT_HOLD,=,True)
+		V.Passed.GAB-CHK-2.Set("Y")
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.FieldVal!DATE_RESOLVE,<>,"01/01/1900")
+		V.Passed.GAB-TEXT-2.Set(V.ODBC.conX!rst.FieldVal!DATE_RESOLVE)
+	F.Intrinsic.Control.EndIf
+
+	V.Passed.GAB-TEXT-1.Set(V.ODBC.conX!rst.FieldValTrim!CUSTOMER_RATING)
+
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+'get user groups and if user not in "ACCOUNT" group then lock controls
+V.Local.bExists.Set(False)
+F.Global.Security.GetAllUserGroups(V.Caller.User,V.Local.sGroups)
+F.Intrinsic.Control.If(V.Local.sGroups.Trim,<>,"")
+	F.Intrinsic.String.Split(V.Local.sGroups,"*!*",V.Local.sGroups)
+	F.Intrinsic.Control.For(V.Local.i,V.Local.sGroups.LBound,V.Local.sGroups.UBound,1)
+		F.Intrinsic.Control.If(V.Local.sGroups(v.Local.i).Trim,=,"ACCOUNT")
+			V.Local.bExists.Set(True)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Next(V.Local.i)
+F.Intrinsic.Control.EndIf
+
+'lock controls if "ACCOUNT" not in users groups
+F.Intrinsic.Control.If(V.Local.bExists,=,False)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-1,"LOCK",1)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-CHK-2,"LOCK",1)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-2,"LOCK",1)
+	F.Intrinsic.UI.ChangeCallerProperty(V.Passed.GAB-TEXT-1,"LOCK",1)
+F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("LoadSavedOptions_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.LoadSavedOptions.End
+
+Program.Sub.SelectResolveDate.Start
+F.Intrinsic.Control.SetErrorHandler("SelectResolveDate_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+'if ignore flag credit hold is checked and there is no valid date entered in the textbox, this sub will fire.
+
+'This sub allows user to select a resolve date to "Ignore Flag Credit Hold checkbox" and resume "Flag Credit Hold When Past Due"
+'if customer is still past due by this date it will resume Flagging the Credit Hold
+Gui.F_SelectDate..Show
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("SelectResolveDate_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.SelectResolveDate.End
+
+Program.Sub.FlagCreditHolds.Start
+F.Intrinsic.Control.SetErrorHandler("FlagCreditHolds_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.i.Declare(Long)
+V.Local.sSql.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.iTotal.Declare(Float)
+V.Local.iOutStand.Declare(Float)
+V.Local.iRet.Declare(Float)
+V.Local.dDate.Declare(Date)
+V.Local.sDate.Declare(String)
+
+'this sub will run when task scheduler fires and will go through custom table and flag credit holds on customers that are past due
+
+'Get Todays Date
+F.Intrinsic.String.Format(V.Ambient.Date,"YYYY-MM-DD",V.Local.sDate)
+
+'First Go through and flag credit holds based on custom table,terms, customer rating
+'And flag customers based on credit limit from customer master and AR credit limit
+
+'Remove IGNORE CREDIT HOLD FLAGS, and DATE_RESOLVE from custom table where the date is less then current date
+'meaning time is past due for the account to be resolved
+F.Intrinsic.string.Build("update GCG_4007_CRDTHOLD set DATE_RESOLVE = '1900-01-01',IGNR_CRDT_HOLD = 0 where DATE_RESOLVE < '{0}'",V.Local.sDate,V.Local.sSql)
+F.ODBC.Connection!conX.Execute(V.Local.sSql)
+
+'get customer list, final list of customers based on remaining list of customers in custom table that to do not have the ignore flag credit hold checked,
+'above we removed the ones that have a resolve date that is past due as of current date.
+V.uGlobal.uARStat.Redim(-1,-1)
+F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uARStat!DATE_RESOLVE,"")
+V.Local.sSql.Set("Select a.CUSTOMER,a.CREDIT as CREDIT_LIMIT,c.AMT_OPEN_ORDERS + c.AMT_OPEN_ITEM_BAL as TOTAL ")
+F.Intrinsic.String.Build("{0}from V_CUSTOMER_MASTER a left outer join V_CUSTOMER_SALES c on a.CUSTOMER = c.CUSTOMER right outer join GCG_4007_CRDTHOLD b on a.customer = b.customer where a.CREDIT<>'' and b.FLAG_CRDT_HOLD = 1 and b.IGNR_CRDT_HOLD = 0",V.Local.sSql,V.Local.sSql)
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	F.Intrinsic.Variable.LoadUDTFromRecordset("conX","rst","v.uGlobal.uARStat",False)
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+F.Intrinsic.Control.For(V.Local.i,V.uGlobal.uARStat.LBound,V.uGlobal.uARStat.UBound,1)
+	
+	'first unflag core credit hold, it will  still be reflagged regardless if it is still past due or over credit limit
+	F.Intrinsic.String.Build("Update CUSTOMER_MASTER set FLAG_CREDIT_HOLD = '' where CUSTOMER = '{0}'",V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+	F.ODBC.Connection!conX.Execute(V.Local.sSql)
+	
+	'now get the actual credit limit based on the credit code "CREDIT" in previous query
+	F.Intrinsic.String.Build("Select CREDIT_AMOUNT from V_AR_CREDIT_LIMIT where CREDIT_CODE = '{0}'",V.uGlobal.uARStat(v.Local.i)!CREDIT_LIMIT.Trim,V.Local.sSql)
+	F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+		V.uGlobal.uARStat(v.Local.i)!CREDIT_LIMIT.Set(V.ODBC.conX!rst.FieldVal!CREDIT_AMOUNT)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rst.Close
+
+	'Then get Custom Options, Flag, ignore flag, date_resolve
+	F.Intrinsic.String.Build("Select * from GCG_4007_CRDTHOLD where CUSTOMER = '{0}'",V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+	F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+		V.uGlobal.uARStat(v.Local.i)!FLAG_CRDT_HOLD.Set(V.ODBC.conX!rst.FieldVal!FLAG_CRDT_HOLD)
+		V.uGlobal.uARStat(v.Local.i)!IGNR_CRDT_HOLD.Set(V.ODBC.conX!rst.FieldVal!IGNR_CRDT_HOLD)
+		V.uGlobal.uARStat(v.Local.i)!DATE_RESOLVE.Set(V.ODBC.conX!rst.FieldVal!DATE_RESOLVE)
+		V.uGlobal.uARStat(v.Local.i)!CUSTOMER_RATING.Set(V.ODBC.conX!rst.FieldVal!CUSTOMER_RATING)
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rst.Close
+
+	'Compare Credit Limit with TOTAL in uARStat, if TOTAL > uARStat then Flag Credit Hold
+	'if credit hold is flagged because over credit limit then flag for deletion after loop is over because it is processed
+	F.Intrinsic.Control.If(V.uGlobal.uARStat(v.Local.i)!TOTAL,>=,V.uGlobal.uARStat(v.Local.i)!CREDIT_LIMIT)
+		F.Intrinsic.String.Build("Update CUSTOMER_MASTER set FLAG_CREDIT_HOLD = 'Y' where CUSTOMER = '{0}'",V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+			F.ODBC.Connection!conX.Execute(V.Local.sSql)
+		V.uGlobal.uARStat(v.Local.i)!PROCESSED.Set("Y")
+	F.Intrinsic.Control.EndIf
+
+F.Intrinsic.Control.Next(V.Local.i)
+
+'delete processed
+F.Intrinsic.Variable.UDTMultiFlag(V.uGlobal.uARStat!PROCESSED,"Y")
+F.Intrinsic.Variable.UDTDeleteFlagged(V.uGlobal.uARStat)
+'Delete Customers who have Rating of "1"
+F.Intrinsic.Variable.UDTMultiFlag(V.uGlobal.uARStat!CUSTOMER_RATING,"1")
+F.Intrinsic.Variable.UDTDeleteFlagged(V.uGlobal.uARStat)
+
+'Now check invoices for remaining customers and see if any past due
+'Add buffer to customers date before query based on customer rating
+'select customers from AR_OPEN_ITEMS WHERE DUE_DATE < TODAYS DATE+buffer
+'meaning it is past due to be in AR OPEN ITEMS, then check to see if paid, if not paid then flag credit hold
+F.Intrinsic.Control.For(V.Local.i,V.uGlobal.uARStat.LBound,V.uGlobal.uARStat.UBound,1)
+	
+	'Add buffer based on rating
+	F.intrinsic.control.selectcase(V.uglobal.uARStat(v.local.i)!CUSTOMER_RATING)
+	'2- 150 days
+	Function.Intrinsic.Control.Case("2")
+		F.Intrinsic.Date.DateAdd("D",150,V.Ambient.Date,V.Local.dDate)
+	'3- 120 days
+	Function.Intrinsic.Control.Case("3")
+		F.Intrinsic.Date.DateAdd("D",120,V.Ambient.Date,V.Local.dDate)
+	'4- 90 days
+	Function.Intrinsic.Control.Case("4")
+		F.Intrinsic.Date.DateAdd("D",90,V.Ambient.Date,V.Local.dDate)
+	'5- 60 days
+	Function.Intrinsic.Control.Case("5")
+		F.Intrinsic.Date.DateAdd("D",60,V.Ambient.Date,V.Local.dDate)
+	'0-30days
+	Function.Intrinsic.Control.Case("0")
+		F.Intrinsic.Date.DateAdd("D",30,V.Ambient.Date,V.Local.dDate)
+	'else use todays date
+	F.Intrinsic.Control.CaseElse
+		V.Local.dDate.Set(V.Ambient.Date)
+	Function.Intrinsic.Control.EndSelect
+	F.Intrinsic.String.Format(V.Local.dDate,"YYYY-MM-DD",V.Local.sDate)
+
+	'Select from AR_OPEN_ITEMS where due date < sDate, if there is a result then check balance
+	'F.Intrinsic.String.Build("Select distinct invoice from v_AR_OPEN_ITEMS where DUE_DATE < '{0}' and customer = '{1}'",V.Local.sDate,V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+'test query	
+F.Intrinsic.String.Build("Select distinct invoice from v_AR_OPEN_ITEMS where customer = '{1}'",V.Local.sDate,V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+
+	F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+		F.Intrinsic.Control.DoUntil(V.ODBC.conX!rst.EOF,=,True)
+			'if balance is not paid then flag credit hold
+			'Function.Global.Accounting.GetARItemStatus(customer ID, Invoice number, string return)
+			'Return if Valid V.local.sRet = Debit amount*!*Credit amount*!*Remaining amount
+
+			F.Global.Accounting.GetARItemStatus(v.uGlobal.uARStat(v.Local.i)!CUSTOMER,v.ODBC.conX!rst.FieldValTrim!INVOICE,v.Local.sRet)
+			F.Intrinsic.Control.If(V.Local.sRet,<>,"***NORETURN***")
+				F.Intrinsic.String.Split(V.Local.sRet,"*!*",V.Local.sRet)
+				F.Intrinsic.Math.ConvertToFloat(V.Local.sRet(2).Trim,V.Local.iRet)
+				F.Intrinsic.Control.If(V.Local.iRet,>,0)
+					F.Intrinsic.String.Build("Update CUSTOMER_MASTER set FLAG_CREDIT_HOLD = 'Y' where CUSTOMER = '{0}'",V.uGlobal.uARStat(v.Local.i)!CUSTOMER,V.Local.sSql)
+					F.ODBC.Connection!conX.Execute(V.Local.sSql)
+				F.Intrinsic.Control.EndIf
+			F.Intrinsic.Control.EndIf
+		F.ODBC.conX!rst.MoveNext
+		F.Intrinsic.Control.Loop
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rst.Close
+
+F.Intrinsic.Control.Next(V.Local.i)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("FlagCreditHolds_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.FlagCreditHolds.End
+
+Program.Sub.F_SelectDateUnload.Start
+F.Intrinsic.Control.SetErrorHandler("F_SelectDateUnload_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'if customer closes out date selection without saving date, it will not save the record
+F.Intrinsic.UI.Msgbox("Record Not Saved, Must Select Valid Resolution Date to Proceed","Ignore Flag Credit Hold Error")
+V.Passed.GAB-CHK-2.Set("N")
+F.Intrinsic.Control.End
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("F_SelectDateUnload_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.F_SelectDateUnload.End
+
+program.sub.cmddateok_click.start
+F.Intrinsic.Control.SetErrorHandler("cmddateok_click_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+'Set Global variable for date picked
+Gui.F_SelectDate..Visible(false)
+V.Global.sDate.Set(V.Screen.F_SelectDate!dateResolve.Value)
+V.Passed.GAB-TEXT-2.Set(V.Screen.F_SelectDate!dateResolve.Value)
+V.Global.bBusy.Set(False)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("cmddateok_click_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_CREDIT_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+program.sub.cmddateok_click.end
+
+Program.Sub.Comments.Start
+${$0$}$GCG_MIR_CREDIT_HOLD$}$SUPERVSR$}$3/3/2015
+${$3$}$0$}$$}$-1$}$-1$}$$}$1/1/1900$}$Program 2:AR>Transactions>"Flag Credit Hold When Past Due"
+Standard Table:
+Customer_Sales(
+CUSTOMER,FLAG_CREDIT_HOLD)
+
+Hooks
+14350-Populate Customer Master
+-Pre Save Customer Master
+
+
+(Credit Limit from Customer Master will also be used in conjunction with this program.)
+
+create table GCG_4007_CRDTHOLD(
+CUSTOMER char(6),
+FLAG_CRDT_HOLD BIT,
+IGNR_CRDT_HOLD BIT,
+DATE_RESOLVE DATE,
+CUSTOMER_RATING char(1));
+***************************************
+On Customer Master(Pre Save Hook):
+This program will have hidden GAB controls added to the customer master:
+checkbox for "Flag Credit Hold When Past Due"
+checkbox for "Ignore Flag for Credit Hold"
+textbox next to "Flag" checkbox for "Customer Rating" 1-5 (1 High Rated Customer, 5 low rated customer)
+
+(Credit Limit from Customer Master will also be used in conjunction with this program.)
+
+When Flag Credit hold is checked and save is pressed on customer master it will save an the customer ID, and Flag "Y" to the custom table (customer,flag_hold). If it is unflagged, delete record from custom table for customer.
+
+If Ignore Flag is checked,
+On the Pre-Save Hook-Customer Master: Pop Up GAB Screen with a Date Picker to choose "Resolved By:" Date and Ok Button, this Ignore flag will be saved as "Y" to the flag_ignore in custom table along with the date entered, Date Resolve is "REQUIRED" to Save "Ignore Flag". Also remove the Credit hold from CUSTOMER_SALES table. The date and ignore flag will be used in determining how long to ignore the flag_hold field in program and when to place back on credit hold.
+
+*************************
+On Task Scheduler(After Hours) and Custom Menu Item(AR>Transactions>"Check Past Due Credit Holds"):
+Program will be set to run automatically once per day at the end of the day after normal business hours and it will load all customer, flag_hold, flag_ignore, date_resolve, customer rating values to UDT.
+
+Ignore all the customers who still have a flag_ignore and date_resolve date that is still pending.
+
+*Note to programmer*
+for remaining balances on open orders with invoices,Look at GetARItemStatus in the GABforum for getting status of all items. Load all AR_OPEN_ITEM values for each customer(Invoice,Customer ID,Terms,Invoice Date,Due Date). Loop through remaining customers and check AR_OPEN_ITEMS for Invoice Status.
+
+Check each invoice for status and if there is still a remaining balance, check terms, Due Date. If no due date is set
+
+then use Invoice Date along with terms code. For "ALL" items, add 30 days to due date according to terms(ex. if terms is Net 30, then they would still not actually be put on credit hold until 60 days past due date). Additional Buffers will be set according to customer rating from custom table.
+
+Check the total for all open items unpaid and compare against Credit Limit from customer master. If open amount is over credit limit then flag credit hold as well.
+
+The determination of flagging is NOT credit limit AND past due TOGETHER.
+
+If Customer IS over credit limit OR Past Due then flag credit hold. And if neither are true then un-flag.
+
+For the Ignore_Flag: If it is past the date_resolve date and invoices are still past due, remove the flag_ignore & Date resolve and place customer back on credit hold in CUSTOMER_SALES
+
+No Rating: Use default additional 30 days.
+Rating = 5: add 60 days to due date until flagged for credit hold
+Rating = 4: add 90 days to due date until flagged for credit hold
+Rating = 3: add 120 days to due date until flagged for credit hold
+Rating = 2: add 150 days to due date until flagged for credit hold
+Rating = 1: NEVER on Credit Hold
+
+Also Loop through all customers from customer sales where FLAG_CREDIT_HOLD = "Y" and see if all invoices are resolved (None Past Due), then unflag from credit hold.
+
+**************
+
+Hooks
+-Line Qty Change Hook
+
+On Qty change hook for sales order lines.
+(Scenario, if customer is not currently on credit hold and there is an open order, if the user goes in the edit a line and the total order amount increases and goes over the credit limit, prevent user from saving lines.)
+Program will get new total order amount from screen and add it to the total amount of orders unpaid and compare to credit limit, if over then LOCK the save button so user will be unable to save and display message box, "Customer has Exceeded Credit Limit, Unable to Save Order Line")
+Program.Sub.Comments.End
+
