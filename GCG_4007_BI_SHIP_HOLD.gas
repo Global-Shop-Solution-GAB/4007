@@ -1,0 +1,128 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Variable.Global.iBIRunID.Declare(Long,0)
+Variable.Global.iReportID.Declare(Long,0)
+Variable.Global.iLogID.Declare(Long,0)
+Variable.UDT.uReport.Define("CUSTOMER",String,CUSTOMER)
+Variable.UDT.uReport.Define("NAME_CUSTOMER_SHIP",String,NAME_CUSTOMER_SHIP)
+Variable.UDT.uReport.Define("CITY_SHIP",String,CITY_SHIP)
+Variable.UDT.uReport.Define("STATE_SHIP",String,STATE_SHIP)
+Variable.UDT.uReport.Define("PHONE_SHIP",String,PHONE_SHIP)
+Variable.UDT.uReport.Define("SHP_HLD",String,SHP_HLD)
+Variable.UDT.uReport.Define("BIRUNID",Long)
+Variable.uGlobal.uReport.Declare("uReport")
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+'Shipping Hold REPORT
+'Coded BY SFF
+'3/5/52015
+
+'Connection
+F.ODBC.Connection!conX.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+F.Global.BI.GetRunID(V.Global.iBIRunID)
+F.Global.BI.StartLogging(V.Global.iBIRunID,-1,-1,"",V.Global.iLogID)
+'Get Data
+F.Intrinsic.Control.CallSub(Getreportdata)
+F.Global.BI.StopLogging(V.Global.iLogID)
+'Run Report
+F.Intrinsic.Control.CallSub(Callbi)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_BI_SHIP_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.GetReportData.Start
+F.Intrinsic.Control.SetErrorHandler("GetReportData_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.sRet.Declare(String)
+V.Local.sSql.Declare(String)
+
+'redim udt to load from recordset
+V.uGlobal.uReport.Redim(-1,-1)
+
+'Build Sql String
+V.Local.sSql.Set("Select a.CUSTOMER,a.NAME_CUSTOMER_SHIP,a.CITY_SHIP,a.STATE_SHIP,LTRIM(RTRIM(a.T_COUNTRY + ' ' + a.AREA + ' ' + a.TELE)) as PHONE_SHIP,'Y' as SHP_HLD ")
+F.Intrinsic.String.Build("{0}from v_CUSTOMER_SHIPTO a left outer join V_CUST_FORM_INFO b on a.customer = b.customer where b.SHP_HLD = 'Y'",V.Local.sSql,V.Local.sSql)
+'Open RecordSet
+F.ODBC.Connection!conX.OpenRecordsetRO("rst",V.Local.sSql)
+F.Intrinsic.Control.If(V.ODBC.conX!rst.EOF,<>,True)
+	'Load UDT
+	F.Intrinsic.Variable.LoadUDTFromRecordset("conX","rst","V.uGlobal.uReport",False)
+	F.Intrinsic.Variable.SetUDTFieldReference(V.uGlobal.uReport!BIRUNID,"BIRUNID")
+	F.Intrinsic.Variable.UDTSetMemberValue(V.uGlobal.uReport!BIRUNID,V.Global.iBIRunID)
+	'Save Records to BI TABLE
+	F.ODBC.Connection!conX.OpenRecordsetRW("rstSave","Select * from GCG_4007_SHOLD")
+	F.Intrinsic.Control.If(V.uGlobal.uReport.LBound,<>,-1)
+		F.Intrinsic.Variable.SaveUDTToRecordSet("conX","rstSave","v.uGlobal.uReport")
+	F.Intrinsic.Control.EndIf
+	F.ODBC.conX!rstSave.Close
+F.Intrinsic.Control.EndIf
+F.ODBC.conX!rst.Close
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("GetReportData_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_BI_SHIP_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.GetReportData.End
+
+Program.Sub.CallBI.Start
+F.Intrinsic.Control.SetErrorHandler("CallBI_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+V.Local.iRet.Declare(Long)
+V.Local.sRet.Declare(String)
+
+F.Intrinsic.String.ConvertToString(V.Global.iBIRunID,V.Local.sRet)
+
+'Run Report
+F.Global.BI.RunReportPreProcessor(V.Global.iBIRunID,V.Global.iLogID,"","","",-1,True,"",-1,"",-1,"","",V.Local.iRet)
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("CallBI_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_4007_BI_SHIP_HOLD.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.CallBI.End
+
+Program.Sub.Comments.Start
+${$0$}$GCG_4007_SHOLD$}$SUPERVSR$}$3/16/2015
+${$3$}$0$}$$}$-1$}$-1$}$$}$1/1/1900$}$Shipping Hold Report Report will show all customers who are currently on shipping hold
+CUSTOM BI REPORT
+
+TABLE
+Create TABLE GCG_4007_SHOLD(
+CUSTOMER char(6),
+NAME_CUSTOMER_SHIP char(30),
+CITY_SHIP char(30),
+STATE_SHIP char(30),
+PHONE_SHIP char(30),
+SHP_HLD char(1));
+Program.Sub.Comments.End
+
